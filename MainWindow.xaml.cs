@@ -1,14 +1,46 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace DesktopTimeTracker
 {
     public partial class MainWindow : Window
     {
+        public ObservableCollection<DesktopButton> DesktopButtons { get; set; }
+        private string activeColor = "Green";
+        private string inactiveColor = "#555555";
+
         public MainWindow()
         {
             InitializeComponent();
+            makeDesktopButtons(VirtualDesktop.GetDesktopCount());
+            DataContext = this;
+        }
+
+        private void makeDesktopButtons(int desktops)
+        {
+            // between 1 and 5 desktops, to avoid UI issues with too many buttons
+            desktops = Math.Min(Math.Max(1, desktops), 5);
+            DesktopButtons = new ObservableCollection<DesktopButton> {};
+            for (int i = 0; i < desktops; i++)
+            {
+                DesktopButtons.Add(new DesktopButton { Id = i, Name = $"{i+1}", statusColor = inactiveColor });
+            }
+            // set state of active desktop buttons
+            if (Application.Current is App app)
+            {
+                bool[] activeDesktops = app.getActiveDesktops();
+                foreach (var button in DesktopButtons)
+                {
+                    if (activeDesktops[button.Id])
+                    {
+                        button.statusColor = activeColor;
+                    }
+                }
+            }
         }
 
         protected override void OnStateChanged(EventArgs e)
@@ -78,6 +110,23 @@ namespace DesktopTimeTracker
             {
                 app.Shutdown();
             }
+        }
+
+        private void Desktop_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && Application.Current is App app)
+            {
+                app.toggleDesktopTracking((int)button.Tag);
+                string color = app.isTargetDesktop((int)button.Tag) ? activeColor : inactiveColor;
+                button.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
+            }
+        }
+
+        public class DesktopButton
+        {
+            public required int Id { get; set; }
+            public required string Name { get; set; }
+            public required string statusColor { get; set; }
         }
     }
 }

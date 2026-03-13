@@ -13,7 +13,7 @@ namespace DesktopTimeTracker
         private TrayPopup? trayPopup;
         private DispatcherTimer? uiUpdateTimer;
         private Stopwatch stopwatch = new Stopwatch();
-        private int targetDesktop = 3;
+        private bool[] targetDesktops = new bool[5]; // Support up to 5 desktops
         private int currentDesktop;
         private HwndSource? hwndSource;
         private readonly object timerLock = new object();
@@ -25,7 +25,10 @@ namespace DesktopTimeTracker
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            
+
+            // default desktop to track
+            targetDesktops[3] = true; // Track desktop 4 (0-based index)
+
             // Initialize the system tray icon
             notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
             
@@ -81,6 +84,31 @@ namespace DesktopTimeTracker
             return IntPtr.Zero;
         }
 
+        public int getDesktopCount()
+        {
+            return VirtualDesktop.GetDesktopCount();
+        }
+
+        public bool isTargetDesktop(int desktop)
+        {
+            if (desktop < 0 || desktop >= targetDesktops.Length)
+                return false;
+            return targetDesktops[desktop];
+        }
+
+        public void toggleDesktopTracking(int desktop)
+        {
+            if (desktop < 0 || desktop >= targetDesktops.Length)
+                return;
+            targetDesktops[desktop] = !targetDesktops[desktop];
+            UpdateTimerState();
+        }
+
+        public bool[] getActiveDesktops()
+        {
+            return targetDesktops;
+        }
+
         private void OnDesktopChanged(int oldDesktop, int newDesktop)
         {
             // Check if we're already on the UI thread
@@ -107,7 +135,7 @@ namespace DesktopTimeTracker
                 if (stopwatch == null)
                     return;
 
-                if (currentDesktop == targetDesktop && !timerPaused)
+                if (isTargetDesktop(currentDesktop) && !timerPaused)
                 {
                     // Resume timer when on target desktop and not paused by user
                     if (!stopwatch.IsRunning)
@@ -136,7 +164,7 @@ namespace DesktopTimeTracker
                 stopwatch = new Stopwatch();
                 
                 // Start only if on target desktop
-                if (currentDesktop == targetDesktop)
+                if (isTargetDesktop(currentDesktop))
                 {
                     stopwatch.Start();
                 }
@@ -188,7 +216,7 @@ namespace DesktopTimeTracker
                 stopwatch.Restart();
                 
                 // Pause immediately if not on target desktop
-                if (currentDesktop != targetDesktop || timerPaused)
+                if (isTargetDesktop(currentDesktop) || timerPaused)
                 {
                     stopwatch.Stop();
                     isRunning = false;
