@@ -15,13 +15,10 @@ namespace DesktopTimeTracker
         private int targetDesktop = 3;
         private int currentDesktop;
         private HwndSource? hwndSource;
+        private readonly object timerLock = new object();
         
         // Custom message ID for desktop changes
-        // The message will be WM_USER + messageOffset that we specify
-        private const int WM_USER = 0x0400;
-        private const uint DESKTOP_CHANGE_MESSAGE_OFFSET = 0x0139; // Use a specific offset
-        //private const int WM_DESKTOP_CHANGED = WM_USER + (int)DESKTOP_CHANGE_MESSAGE_OFFSET;
-        private const int WM_DESKTOP_CHANGED = 0x0139;
+        private const uint DESKTOP_CHANGE_MESSAGE_OFFSET = 0x0139;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -44,7 +41,7 @@ namespace DesktopTimeTracker
 
         private void CreateMessageWindow()
         {
-            // Create HwndSource directly instead of using a WPF Window
+            // Create HwndSource for receiving Windows messages
             HwndSourceParameters parameters = new HwndSourceParameters("VirtualDesktopListener")
             {
                 Width = 0,
@@ -55,38 +52,23 @@ namespace DesktopTimeTracker
             };
 
             hwndSource = new HwndSource(parameters);
-            
-            // Add the hook to process messages
             hwndSource.AddHook(WndProc);
             
-            // Get the window handle
-            IntPtr hwnd = hwndSource.Handle;
-            Debug.WriteLine($"Message window handle: {hwnd:X}");
-
             // Register for desktop change messages
-            int result = VirtualDesktop.RegisterPostMessageHook(hwnd, DESKTOP_CHANGE_MESSAGE_OFFSET);
-            Debug.WriteLine($"RegisterPostMessageHook result: {result}");
-            Debug.WriteLine($"Listening for messages at: 0x{WM_DESKTOP_CHANGED:X} (WM_USER+{DESKTOP_CHANGE_MESSAGE_OFFSET})");
-            
-            if (result == 0)
-            {
-                Debug.WriteLine("WARNING: RegisterPostMessageHook returned 0 - registration may have failed");
-            }
+            VirtualDesktop.RegisterPostMessageHook(hwndSource.Handle, DESKTOP_CHANGE_MESSAGE_OFFSET);
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            // Log ALL messages for debugging (comment out after you find the right one)
-            Debug.WriteLine($"Message: 0x{msg:X4}, wParam={wParam.ToInt32()}, lParam={lParam.ToInt32()}");
+            // Log ALL messages for debugging and finding correct offset (causes crashes)
+            //Debug.WriteLine($"Message: 0x{msg:X4}, wParam={wParam.ToInt32()}, lParam={lParam.ToInt32()}");
 
-            if (msg == WM_DESKTOP_CHANGED)
+            if (msg == DESKTOP_CHANGE_MESSAGE_OFFSET)
             {
-                // The desktop numbers might be in different parameters
-                // Try both wParam and lParam
-                int newDesktop = wParam.ToInt32();
-                int oldDesktop = lParam.ToInt32();
+                int oldDesktop = wParam.ToInt32();
+                int newDesktop = lParam.ToInt32();
                 
-                Debug.WriteLine($"*** DESKTOP CHANGE DETECTED: {oldDesktop} -> {newDesktop} ***");
+                Debug.WriteLine($"Desktop changed: {oldDesktop} -> {newDesktop}");
                 OnDesktopChanged(oldDesktop, newDesktop);
                 handled = true;
             }
@@ -96,47 +78,63 @@ namespace DesktopTimeTracker
 
         private void OnDesktopChanged(int oldDesktop, int newDesktop)
         {
-            Debug.WriteLine($"Desktop changed from {oldDesktop} to {newDesktop}");
-            
-            // Update on UI thread
-            Dispatcher.Invoke(() =>
+            // Check if we're already on the UI thread
+            if (Dispatcher.CheckAccess())
             {
                 currentDesktop = newDesktop;
                 UpdateTimerState();
-            });
+            }
+            else
+            {
+                // Use BeginInvoke instead of Invoke to avoid blocking
+                Dispatcher.BeginInvoke(() =>
+                {
+                    currentDesktop = newDesktop;
+                    UpdateTimerState();
+                });
+            }
         }
 
         private void UpdateTimerState()
         {
-            if (currentDesktop == targetDesktop)
+            lock (timerLock)
             {
-                // Resume timer when on target desktop
-                if (stopwatch?.IsRunning == false)
+                if (stopwatch == null)
+                    return;
+
+                if (currentDesktop == targetDesktop)
                 {
-                    stopwatch?.Start();
-                    Debug.WriteLine("Timer resumed - on target desktop");
+                    // Resume timer when on target desktop
+                    if (!stopwatch.IsRunning)
+                    {
+                        stopwatch.Start();
+                        Debug.WriteLine("Timer resumed - on target desktop");
+                    }
                 }
-            }
-            else
-            {
-                // Pause timer when not on target desktop
-                if (stopwatch?.IsRunning == true)
+                else
                 {
-                    stopwatch?.Stop();
-                    Debug.WriteLine("Timer paused - not on target desktop");
+                    // Pause timer when not on target desktop
+                    if (stopwatch.IsRunning)
+                    {
+                        stopwatch.Stop();
+                        Debug.WriteLine("Timer paused - not on target desktop");
+                    }
                 }
             }
         }
 
         private void InitializeTimer()
         {
-            // Use Stopwatch for accurate time tracking
-            stopwatch = new Stopwatch();
-            
-            // Start only if on target desktop
-            if (currentDesktop == targetDesktop)
+            lock (timerLock)
             {
-                stopwatch.Start();
+                // Use Stopwatch for accurate time tracking
+                stopwatch = new Stopwatch();
+                
+                // Start only if on target desktop
+                if (currentDesktop == targetDesktop)
+                {
+                    stopwatch.Start();
+                }
             }
 
             // Use DispatcherTimer only for UI updates
@@ -153,19 +151,35 @@ namespace DesktopTimeTracker
             // Update UI with current elapsed time
             if (Current.MainWindow is MainWindow mainWindow && mainWindow.IsLoaded)
             {
-                var elapsed = stopwatch?.Elapsed ?? TimeSpan.Zero;
+                TimeSpan elapsed;
+                lock (timerLock)
+                {
+                    if (stopwatch == null)
+                        return;
+                    
+                    elapsed = stopwatch.Elapsed;
+                }
+                
                 mainWindow.UpdateTimeDisplay(elapsed);
             }
         }
 
         public void ResetTimer()
         {
-            stopwatch?.Restart();
-            
-            // Pause immediately if not on target desktop
-            if (currentDesktop != targetDesktop)
+            lock (timerLock)
             {
-                stopwatch?.Stop();
+                if (stopwatch == null)
+                {
+                    stopwatch = new Stopwatch();
+                }
+                
+                stopwatch.Restart();
+                
+                // Pause immediately if not on target desktop
+                if (currentDesktop != targetDesktop)
+                {
+                    stopwatch.Stop();
+                }
             }
             
             if (Current.MainWindow is MainWindow mainWindow && mainWindow.IsLoaded)
@@ -176,18 +190,27 @@ namespace DesktopTimeTracker
 
         public void PauseTimer()
         {
-            stopwatch?.Stop();
+            lock (timerLock)
+            {
+                stopwatch?.Stop();
+            }
         }
 
         public void ResumeTimer()
         {
-            stopwatch?.Start();
+            lock (timerLock)
+            {
+                stopwatch?.Start();
+            }
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
             uiUpdateTimer?.Stop();
-            stopwatch?.Stop();
+            lock (timerLock)
+            {
+                stopwatch?.Stop();
+            }
             hwndSource?.RemoveHook(WndProc);
             hwndSource?.Dispose();
             notifyIcon?.Dispose();
@@ -208,7 +231,12 @@ namespace DesktopTimeTracker
             window.Activate();
             
             // Update display with current time
-            window.UpdateTimeDisplay(stopwatch?.Elapsed ?? TimeSpan.Zero);
+            TimeSpan elapsed;
+            lock (timerLock)
+            {
+                elapsed = stopwatch?.Elapsed ?? TimeSpan.Zero;
+            }
+            window.UpdateTimeDisplay(elapsed);
         }
 
         private void ExitApp(object sender, RoutedEventArgs e)

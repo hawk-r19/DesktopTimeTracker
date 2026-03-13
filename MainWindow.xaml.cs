@@ -30,7 +30,15 @@ namespace DesktopTimeTracker
 
         public void UpdateTimeDisplay(TimeSpan time)
         {
-            TimeLabel.Text = time.ToString(@"hh\:mm\:ss");
+            // Use different format that handles days if time exceeds 24 hours
+            if (time.TotalHours >= 24)
+            {
+                TimeLabel.Text = $"{(int)time.TotalHours:D2}:{time.Minutes:D2}:{time.Seconds:D2}";
+            }
+            else
+            {
+                TimeLabel.Text = time.ToString(@"hh\:mm\:ss");
+            }
         }
 
         private void ResetTimer(object sender, RoutedEventArgs e)
