@@ -3,19 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:DesktopTimeTracker"
              xmlns:tb="http://www.hardcodet.net/taskbar"
-             StartupUri="MainWindow.xaml">
+             StartupUri="MainWindow.xaml"
+             ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
 
         <tb:TaskbarIcon x:Key="NotifyIcon" 
-                        IconSource="icon.ico" 
+                        IconSource="timer_icon.ico" 
                         ToolTipText="Desktop Time Tracker">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Open" Click="Open_Click"/>
-                    <MenuItem Header="Exit" Click="Exit_Click"/>
+                    <MenuItem Header="Open" Click="OpenApp"/>
+                    <MenuItem Header="Exit" Click="ExitApp"/>
                 </ContextMenu>
             </tb:TaskbarIcon.ContextMenu>
         </tb:TaskbarIcon>
-
+        
     </Application.Resources>
 </Application>
