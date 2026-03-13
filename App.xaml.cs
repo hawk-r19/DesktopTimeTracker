@@ -10,13 +10,15 @@ namespace DesktopTimeTracker
     public partial class App : Application
     {
         private TaskbarIcon? notifyIcon;
+        private TrayPopup? trayPopup;
         private DispatcherTimer? uiUpdateTimer;
         private Stopwatch? stopwatch;
         private int targetDesktop = 3;
         private int currentDesktop;
         private HwndSource? hwndSource;
         private readonly object timerLock = new object();
-        
+        private bool timerPaused = false;
+
         // Custom message ID for desktop changes
         private const uint DESKTOP_CHANGE_MESSAGE_OFFSET = 0x0139;
 
@@ -26,6 +28,9 @@ namespace DesktopTimeTracker
             
             // Initialize the system tray icon
             notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
+            
+            // Get reference to the TrayToolTip
+            trayPopup = notifyIcon.TrayPopup as TrayPopup;
 
             // Create a hidden window to receive desktop change messages
             CreateMessageWindow();
@@ -102,9 +107,9 @@ namespace DesktopTimeTracker
                 if (stopwatch == null)
                     return;
 
-                if (currentDesktop == targetDesktop)
+                if (currentDesktop == targetDesktop && !timerPaused)
                 {
-                    // Resume timer when on target desktop
+                    // Resume timer when on target desktop and not paused by user
                     if (!stopwatch.IsRunning)
                     {
                         stopwatch.Start();
@@ -117,7 +122,7 @@ namespace DesktopTimeTracker
                     if (stopwatch.IsRunning)
                     {
                         stopwatch.Stop();
-                        Debug.WriteLine("Timer paused - not on target desktop");
+                        Debug.WriteLine("Timer paused");
                     }
                 }
             }
@@ -148,20 +153,26 @@ namespace DesktopTimeTracker
 
         private void UiUpdateTimer_Tick(object? sender, EventArgs e)
         {
-            // Update UI with current elapsed time
+            TimeSpan elapsed;
+            bool isRunning;
+            
+            lock (timerLock)
+            {
+                if (stopwatch == null)
+                    return;
+                
+                elapsed = stopwatch.Elapsed;
+                isRunning = stopwatch.IsRunning;
+            }
+            
+            // Update main window if loaded
             if (Current.MainWindow is MainWindow mainWindow && mainWindow.IsLoaded)
             {
-                TimeSpan elapsed;
-                lock (timerLock)
-                {
-                    if (stopwatch == null)
-                        return;
-                    
-                    elapsed = stopwatch.Elapsed;
-                }
-                
                 mainWindow.UpdateTimeDisplay(elapsed);
             }
+            
+            // Update tray popup
+            trayPopup?.UpdateTimer(elapsed, isRunning, timerPaused);
         }
 
         public void ResetTimer()
@@ -176,7 +187,7 @@ namespace DesktopTimeTracker
                 stopwatch.Restart();
                 
                 // Pause immediately if not on target desktop
-                if (currentDesktop != targetDesktop)
+                if (currentDesktop != targetDesktop || timerPaused)
                 {
                     stopwatch.Stop();
                 }
@@ -186,6 +197,17 @@ namespace DesktopTimeTracker
             {
                 mainWindow.UpdateTimeDisplay(TimeSpan.Zero);
             }
+        }
+
+        public void TogglePauseTimer()
+        {
+            timerPaused = !timerPaused;
+            UpdateTimerState();
+        }
+
+        public bool isTimerPaused()
+        {
+            return timerPaused;
         }
 
         public void PauseTimer()
@@ -204,20 +226,7 @@ namespace DesktopTimeTracker
             }
         }
 
-        protected override void OnExit(ExitEventArgs e)
-        {
-            uiUpdateTimer?.Stop();
-            lock (timerLock)
-            {
-                stopwatch?.Stop();
-            }
-            hwndSource?.RemoveHook(WndProc);
-            hwndSource?.Dispose();
-            notifyIcon?.Dispose();
-            base.OnExit(e);
-        }
-
-        private void OpenApp(object sender, RoutedEventArgs e)
+        public void OpenMainWindow()
         {
             MainWindow? window = Current.MainWindow as MainWindow;
             if (window == null)
@@ -237,6 +246,29 @@ namespace DesktopTimeTracker
                 elapsed = stopwatch?.Elapsed ?? TimeSpan.Zero;
             }
             window.UpdateTimeDisplay(elapsed);
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            uiUpdateTimer?.Stop();
+            lock (timerLock)
+            {
+                stopwatch?.Stop();
+            }
+            hwndSource?.RemoveHook(WndProc);
+            hwndSource?.Dispose();
+            notifyIcon?.Dispose();
+            base.OnExit(e);
+        }
+
+        private void TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            OpenMainWindow();
+        }
+
+        private void OpenApp(object sender, RoutedEventArgs e)
+        {
+            OpenMainWindow();
         }
 
         private void ExitApp(object sender, RoutedEventArgs e)

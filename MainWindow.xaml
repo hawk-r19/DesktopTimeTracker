@@ -5,29 +5,54 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopTimeTracker"
         mc:Ignorable="d"
-        Title="Desktop Time Tracker" Height="450" Width="800"
+        Title="Desktop Time Tracker" Height="450" Width="400"
         Icon="/timer_icon.ico"
-        Closing="WindowClosing">
+        Closing="WindowClosing"
+        Background="#2D2D30" BorderBrush="#3F3F46"
+        BorderThickness="1">
     <Grid Margin="20">
 
         <StackPanel>
 
             <TextBlock
-            Text="Project Time Tracker"
-            FontSize="20"
-            FontWeight="Bold"
-            Margin="0 0 0 20"/>
+                Text="Project Time Tracker"
+                FontSize="30"
+                FontWeight="Bold"
+                Foreground="#E0E0E0"
+                HorizontalAlignment="Center"
+                Margin="0 0 0 20"/>
 
             <TextBlock
-            x:Name="TimeLabel"
-            FontSize="28"
-            Text="00:00:00"/>
+                x:Name="TimeLabel"
+                FontSize="38"
+                FontWeight="Bold"
+                Foreground="#E0E0E0"
+                HorizontalAlignment="Center"
+                Text="00:00:00"/>
 
             <Button
-            Content="Reset Timer"
-            Width="120"
-            Margin="0 20 0 0"
-            Click="ResetTimer"/>
+                Content="Pause Tracking"
+                Width="120"
+                Margin="0 20 0 0"
+                FontSize="14"
+                VerticalAlignment="Center"
+                Background="#3E3E42"
+                Foreground="#E0E0E0"
+                BorderBrush="#555555"
+                Padding="10,5"
+                Click="TogglePauseTimer"/>
+
+            <Button
+                Content="Reset"
+                Width="120"
+                Margin="0 20 0 0"
+                FontSize="14"
+                VerticalAlignment="Center"
+                Background="#3E3E42"
+                Foreground="#E0E0E0"
+                BorderBrush="#555555"
+                Padding="10,5"
+                Click="ResetTimer"/>
 
         </StackPanel>
 

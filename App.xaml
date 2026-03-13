@@ -9,7 +9,15 @@
 
         <tb:TaskbarIcon x:Key="NotifyIcon" 
                         IconSource="timer_icon.ico" 
-                        ToolTipText="Desktop Time Tracker">
+                        ToolTipText="Desktop Time Tracker"
+                        PopupActivation="LeftClick"
+                        TrayMouseDoubleClick="TrayMouseDoubleClick">
+            <!-- Custom Popup -->
+            <tb:TaskbarIcon.TrayPopup>
+                <local:TrayPopup x:Name="TrayPopupControl"/>
+            </tb:TaskbarIcon.TrayPopup>
+            
+            <!-- Keep context menu for right-click -->
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Open" Click="OpenApp"/>
