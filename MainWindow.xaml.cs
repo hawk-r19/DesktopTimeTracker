@@ -71,5 +71,13 @@ namespace DesktopTimeTracker
                 app.ResetTimer();
             }
         }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current is App app)
+            {
+                app.Shutdown();
+            }
+        }
     }
 }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopTimeTracker"
         mc:Ignorable="d"
-        Title="Desktop Time Tracker" Height="330" Width="370"
+        Title="Desktop Time Tracker" Height="380" Width="370"
         Icon="/timer_icon.ico"
         Closing="WindowClosing"
         Background="#2D2D30" BorderBrush="#3F3F46"
@@ -41,7 +41,7 @@
             <Button
                 Content="Pause Tracking"
                 Name="PauseButton"
-                Width="120"
+                Width="125"
                 Margin="0 20 0 0"
                 FontSize="14"
                 VerticalAlignment="Center"
@@ -62,6 +62,18 @@
                 BorderBrush="#555555"
                 Padding="10,5"
                 Click="Reset_Click"/>
+
+            <Button
+                Content="Exit"
+                Width="120"
+                Margin="0 20 0 0"
+                FontSize="14"
+                VerticalAlignment="Center"
+                Background="#3E3E42"
+                Foreground="#E0E0E0"
+                BorderBrush="#555555"
+                Padding="10,5"
+                Click="Exit_Click"/>
 
         </StackPanel>
 
