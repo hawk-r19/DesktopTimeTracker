@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Runtime.InteropServices;
+using System.ComponentModel;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace DesktopTimeTracker
 {
@@ -12,7 +11,7 @@ namespace DesktopTimeTracker
             InitializeComponent();
         }
 
-        /*protected override void OnStateChanged(EventArgs e)
+        protected override void OnStateChanged(EventArgs e)
         {
             base.OnStateChanged(e);
 
@@ -20,7 +19,14 @@ namespace DesktopTimeTracker
             {
                 Hide();
             }
-        }*/
+        }
+
+        // Override the closing event to hide the window instead of closing it
+        private void WindowClosing(object sender, CancelEventArgs e)
+        {
+            e.Cancel = true;
+            Hide();
+        }   
 
         public void UpdateTimeDisplay(TimeSpan time)
         {

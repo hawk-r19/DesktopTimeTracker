@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:DesktopTimeTracker"
         mc:Ignorable="d"
         Title="Desktop Time Tracker" Height="450" Width="800"
-        Icon="/timer_icon.ico">
+        Icon="/timer_icon.ico"
+        Closing="WindowClosing">
     <Grid Margin="20">
 
         <StackPanel>
