@@ -24,8 +24,8 @@ namespace DesktopTimeTracker
             }
 
             // Update status
-            StatusText.Text = (paused ? "Paused, " : "") + 
-                            (isRunning ? "On Task" : "Off Task");
+            StatusText.Text = paused ? "Paused" :
+                            isRunning ? "On Task" : "Off Task";
             StatusText.Foreground = isRunning && !paused ? 
                 System.Windows.Media.Brushes.Green : 
                 System.Windows.Media.Brushes.Gray;

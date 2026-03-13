@@ -28,7 +28,7 @@ namespace DesktopTimeTracker
             Hide();
         }   
 
-        public void UpdateTimeDisplay(TimeSpan time)
+        public void UpdateTimeDisplay(TimeSpan time, bool isRunning, bool paused)
         {
             // Use different format that handles days if time exceeds 24 hours
             if (time.TotalHours >= 24)
@@ -39,9 +39,32 @@ namespace DesktopTimeTracker
             {
                 TimeLabel.Text = time.ToString(@"hh\:mm\:ss");
             }
+
+            // Update status
+            StatusText.Text = paused ? "Paused" : 
+                            isRunning ? "On Task" : "Off Task";
+            StatusText.Foreground = isRunning && !paused ?
+                System.Windows.Media.Brushes.Green :
+                System.Windows.Media.Brushes.Gray;
         }
 
-        private void ResetTimer(object sender, RoutedEventArgs e)
+        private void Pause_Click(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current is App app)
+            {
+                app.TogglePauseTimer();
+                if (app.isTimerPaused())
+                {
+                    PauseButton.Content = "Resume Tracking";
+                }
+                else
+                {
+                    PauseButton.Content = "Pause Tracking";
+                }
+            }
+        }
+
+        private void Reset_Click(object sender, RoutedEventArgs e)
         {
             if (Application.Current is App app)
             {

@@ -12,7 +12,7 @@ namespace DesktopTimeTracker
         private TaskbarIcon? notifyIcon;
         private TrayPopup? trayPopup;
         private DispatcherTimer? uiUpdateTimer;
-        private Stopwatch? stopwatch;
+        private Stopwatch stopwatch = new Stopwatch();
         private int targetDesktop = 3;
         private int currentDesktop;
         private HwndSource? hwndSource;
@@ -168,7 +168,7 @@ namespace DesktopTimeTracker
             // Update main window if loaded
             if (Current.MainWindow is MainWindow mainWindow && mainWindow.IsLoaded)
             {
-                mainWindow.UpdateTimeDisplay(elapsed);
+                mainWindow.UpdateTimeDisplay(elapsed, isRunning, timerPaused);
             }
             
             // Update tray popup
@@ -177,6 +177,7 @@ namespace DesktopTimeTracker
 
         public void ResetTimer()
         {
+            bool isRunning = true;
             lock (timerLock)
             {
                 if (stopwatch == null)
@@ -190,12 +191,13 @@ namespace DesktopTimeTracker
                 if (currentDesktop != targetDesktop || timerPaused)
                 {
                     stopwatch.Stop();
+                    isRunning = false;
                 }
             }
             
             if (Current.MainWindow is MainWindow mainWindow && mainWindow.IsLoaded)
             {
-                mainWindow.UpdateTimeDisplay(TimeSpan.Zero);
+                mainWindow.UpdateTimeDisplay(TimeSpan.Zero, isRunning, timerPaused);
             }
         }
 
@@ -245,7 +247,7 @@ namespace DesktopTimeTracker
             {
                 elapsed = stopwatch?.Elapsed ?? TimeSpan.Zero;
             }
-            window.UpdateTimeDisplay(elapsed);
+            window.UpdateTimeDisplay(elapsed, stopwatch.IsRunning, timerPaused);
         }
 
         protected override void OnExit(ExitEventArgs e)

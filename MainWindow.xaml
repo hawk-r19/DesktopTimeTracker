@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopTimeTracker"
         mc:Ignorable="d"
-        Title="Desktop Time Tracker" Height="450" Width="400"
+        Title="Desktop Time Tracker" Height="330" Width="370"
         Icon="/timer_icon.ico"
         Closing="WindowClosing"
         Background="#2D2D30" BorderBrush="#3F3F46"
@@ -20,7 +20,7 @@
                 FontWeight="Bold"
                 Foreground="#E0E0E0"
                 HorizontalAlignment="Center"
-                Margin="0 0 0 20"/>
+                Margin="0 0 0 10"/>
 
             <TextBlock
                 x:Name="TimeLabel"
@@ -30,8 +30,17 @@
                 HorizontalAlignment="Center"
                 Text="00:00:00"/>
 
+            <!-- Status Text -->
+            <TextBlock x:Name="StatusText"
+               Text="Off Task"
+               FontSize="18"
+               Foreground="#AAAAAA"
+               HorizontalAlignment="Center"
+               Margin="0,15,0,10"/>
+
             <Button
                 Content="Pause Tracking"
+                Name="PauseButton"
                 Width="120"
                 Margin="0 20 0 0"
                 FontSize="14"
@@ -40,7 +49,7 @@
                 Foreground="#E0E0E0"
                 BorderBrush="#555555"
                 Padding="10,5"
-                Click="TogglePauseTimer"/>
+                Click="Pause_Click"/>
 
             <Button
                 Content="Reset"
@@ -52,7 +61,7 @@
                 Foreground="#E0E0E0"
                 BorderBrush="#555555"
                 Padding="10,5"
-                Click="ResetTimer"/>
+                Click="Reset_Click"/>
 
         </StackPanel>
 
