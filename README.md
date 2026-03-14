@@ -13,7 +13,20 @@ I made this to track billable hours on a project I'm working on myself for a cli
 
 ## Usage and Features
 
-Visual demonstration and tutorial will be added soon
+Upon launch, tracks desktop 4 by default. Starts counting time immediately if on the selected desktop. This is when not on desktop 4.
+![img dtt1](https://github.com/hawk-r19/DesktopTimeTracker/blob/main/imgs/dtt1.png)    
+
+After switching to the active desktop, time starts being tracked.  
+![img dtt2](https://github.com/hawk-r19/DesktopTimeTracker/blob/main/imgs/dtt2.png)  
+
+Can manually pause tracking, requires manually resuming to activate automatic desktop detection. 
+![img dtt3](https://github.com/hawk-r19/DesktopTimeTracker/blob/main/imgs/dtt3.png)   
+
+Can select multiple virtual desktops to contribute to the tracked time.  
+![img dtt4](https://github.com/hawk-r19/DesktopTimeTracker/blob/main/imgs/dtt4.png)  
+
+System tray icon popup from single-click for quick access to time and controls.  
+![img dtt5](https://github.com/hawk-r19/DesktopTimeTracker/blob/main/imgs/dtt5.png)  
 
 ## Future Plans
 
