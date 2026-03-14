@@ -216,7 +216,7 @@ namespace DesktopTimeTracker
                 stopwatch.Restart();
                 
                 // Pause immediately if not on target desktop
-                if (isTargetDesktop(currentDesktop) || timerPaused)
+                if (!isTargetDesktop(currentDesktop) || timerPaused)
                 {
                     stopwatch.Stop();
                     isRunning = false;
