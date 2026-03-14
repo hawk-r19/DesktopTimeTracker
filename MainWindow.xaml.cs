@@ -1,8 +1,9 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace DesktopTimeTracker
@@ -127,6 +128,19 @@ namespace DesktopTimeTracker
             public required int Id { get; set; }
             public required string Name { get; set; }
             public required string statusColor { get; set; }
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                this.DragMove();
+            }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Hide();
         }
     }
 }
